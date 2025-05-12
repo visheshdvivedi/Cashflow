@@ -9,7 +9,6 @@ const Sidebar = () => {
 
     const links = [
         { href: "/", text: "Dashboard", icon: <MdDashboard size={24} /> },
-        { href: "/bank", text: "Banks", icon: <BsBank2 size={24} /> },
         { href: "/account", text: "Accounts", icon: <MdAccountBox size={24} /> },
         { href: "/transaction", text: "Transactions", icon: <LuArrowRightLeft size={24} /> },
         { href: "/settings", text: "Settings", icon: <IoMdSettings size={24} /> },
