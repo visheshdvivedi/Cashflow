@@ -1,70 +1,68 @@
-import React, { useState } from "react";
+import React from "react";
 import Sidebar from "../components/common/Sidebar";
-import { FaEye, FaTrash } from "react-icons/fa";
-import { FaPencil } from "react-icons/fa6";
 import Modal from "../components/common/Modal";
 
-interface Account {
-    id: number;
-    name: string;
-    type: string;
-    bank: {
-        id: number;
-        name: string;
-    };
-    balance: number;
-    status: string;
+import { Account, AccountTypes, AccountStatus, Bank } from "../types";
+
+const BANKS: Bank[] = [
+    { id: 1, name: "HDFC" },
+    { id: 2, name: "Axis" }
+]
+
+const capitalize = (str: string) => {
+    return str.slice(0, 1).toUpperCase() + str.slice(1, str.length);
+}
+
+const CreateModalChild = ({ onCreate }: { onCreate: (account: Account) => void }) => {
+
+    const [account, setAccount] = React.useState<Account>({
+        id: -1,
+        name: "",
+        type: AccountTypes.SAVINGS,
+        status: AccountStatus.ACTIVE,
+        balance: 0,
+        bank: BANKS[0]
+    });
+
+    return (
+        <div className="flex flex-col gap-3">
+            <input placeholder="Enter account name" className="mb-2 focus-visible:outline-none border-b-2 border-blue-500" type="text" name="name" id="create-account-name" value={account.name} onChange={(e) => setAccount({ ...account, "name": e.target.value })} />
+            <select className="mb-2 focus-visible:outline-none border-b-2 border-blue-500" name="account-type" id="create-account-type" value={account.type} onChange={(e) => setAccount({ ...account, "type": e.target.value })}>
+                <option value="" selected disabled hidden>Select account type ...</option>
+                {Object.keys(AccountTypes).map((type, index) => (
+                    <option value={type} key={index}>{capitalize(type)}</option>
+                ))}
+            </select>
+            <select className="mb-2 focus-visible:outline-none border-b-2 border-blue-500" name="account-bank" id="create-account-bank" value={account.bank.name} onChange={(e) => setAccount({ ...account, "bank": BANKS.filter(bank => bank.name === e.target.value)[0] })}>
+                <option value="" selected disabled hidden>Select account bank ...</option>
+                {BANKS.map(type => (
+                    <option value={type.name} key={type.id}>{capitalize(type.name)}</option>
+                ))}
+            </select>
+            <input placeholder="Enter account balance" className="mb-2 focus-visible:outline-none border-b-2 border-blue-500" type="number" min={0} max={1000000} name="balance" id="create-account-balance" value={account.balance} onChange={(e) => setAccount({ ...account, balance: parseInt(e.target.value) })} />
+            <button onClick={() => onCreate(account)} className="px-4 py-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 cursor-pointer">
+                Create
+            </button>
+        </div>
+    )
 }
 
 const AccountPage = () => {
-    const [accounts, setAccounts] = useState<Account[]>([
-        { id: 1, name: "Retirement Savings", type: "savings", bank: { id: 1, name: "HDFC" }, balance: 12345.56565, status: "active" },
-        { id: 2, name: "Laptop Savings", type: "savings", bank: { id: 1, name: "HDFC" }, balance: 124231.343, status: "inactive" }
+
+    const [accounts, setAccounts] = React.useState<Account[]>([
+        { id: 1, name: "Retirement Savings", type: AccountTypes.SAVINGS, bank: BANKS[0], balance: 12345.56565, status: AccountStatus.ACTIVE },
+        { id: 2, name: "Laptop Savings", type: AccountTypes.SAVINGS, bank: BANKS[0], balance: 124231.343, status: AccountStatus.INACTIVE }
     ]);
-
-    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-    const accountTypes = [
-        "savings",
-        "investment",
-        "loan",
-        "credit",
-        "checking",
-        "fixed deposit"
-    ];
+    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState<boolean>(false);
 
     const formatAmount = (amount: number) => {
         return amount.toLocaleString(undefined, { maximumFractionDigits: 2 })
     }
 
-    const handleEdit = (account: Account) => {
-        setSelectedAccount(account);
-        setIsEditModalOpen(true);
-    };
-
-    const handleDelete = (account: Account) => {
-        setSelectedAccount(account);
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleEditSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedAccount) return;
-
-        setAccounts(accounts.map(acc => 
-            acc.id === selectedAccount.id ? selectedAccount : acc
-        ));
-        setIsEditModalOpen(false);
-    };
-
-    const handleDeleteConfirm = () => {
-        if (!selectedAccount) return;
-
-        setAccounts(accounts.filter(acc => acc.id !== selectedAccount.id));
-        setIsDeleteModalOpen(false);
-    };
+    const onAccountCreate = (account: Account) => {
+        setAccounts([ ...accounts, account]);
+        setIsCreateModalOpen(false);
+    }
 
     return (
         <div className="flex flex-row h-screen font-[Roboto]">
@@ -77,7 +75,7 @@ const AccountPage = () => {
                             Track your accounts
                         </h2>
                     </div>
-                    <button className="px-4 py-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 cursor-pointer">
+                    <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 cursor-pointer">
                         Create +
                     </button>
                 </div>
@@ -86,37 +84,46 @@ const AccountPage = () => {
                     <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                <th scope="col" className="px-6 py-3">Name</th>
-                                <th scope="col" className="px-6 py-3">Type</th>
-                                <th scope="col" className="px-6 py-3">Balance</th>
-                                <th scope="col" className="px-6 py-3">Status</th>
-                                <th scope="col" className="px-6 py-3">Bank</th>
-                                <th scope="col" className="px-6 py-3">Action</th>
+                                <th scope="col" className="px-6 py-3">
+                                    Name
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Type
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Balance
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Status
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Bank
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Action
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {accounts.map(account => (
-                                <tr key={account.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
                                     <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                         {account.name}
                                     </th>
-                                    <td className="px-6 py-4">{account.type}</td>
-                                    <td className="px-6 py-4">₹{formatAmount(account.balance)}</td>
-                                    <td className="px-6 py-4">{account.status}</td>
-                                    <td className="px-6 py-4">{account.bank.name}</td>
-                                    <td className="px-6 py-4 flex flex-row justify-start items-center gap-3">
-                                        <button 
-                                            className="text-blue-600 cursor-pointer"
-                                            onClick={() => handleEdit(account)}
-                                        >
-                                            <FaPencil />
-                                        </button>
-                                        <button 
-                                            className="text-red-600 cursor-pointer"
-                                            onClick={() => handleDelete(account)}
-                                        >
-                                            <FaTrash />
-                                        </button>
+                                    <td className="px-6 py-4">
+                                        {account.type}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        ₹{formatAmount(account.balance)}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {account.status}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {account.bank.name}
+                                    </td>
+                                    <td className="px-6 py-4 flex flex-row justify-center items-center gap-1">
+                                        
                                     </td>
                                 </tr>
                             ))}
@@ -124,91 +131,9 @@ const AccountPage = () => {
                     </table>
                 </div>
 
-                {/* Edit Modal */}
-                <Modal 
-                    isOpen={isEditModalOpen} 
-                    onClose={() => setIsEditModalOpen(false)} 
-                    title="Edit Account"
-                >
-                    {selectedAccount && (
-                        <form onSubmit={handleEditSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Name</label>
-                                <input
-                                    type="text"
-                                    value={selectedAccount.name}
-                                    onChange={(e) => setSelectedAccount({...selectedAccount, name: e.target.value})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Type</label>
-                                <select
-                                    value={selectedAccount.type}
-                                    onChange={(e) => setSelectedAccount({...selectedAccount, type: e.target.value})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                >
-                                    {accountTypes.map(type => (
-                                        <option key={type} value={type}>
-                                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Status</label>
-                                <select
-                                    value={selectedAccount.status}
-                                    onChange={(e) => setSelectedAccount({...selectedAccount, status: e.target.value})}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditModalOpen(false)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                </Modal>
+                {/* Create account modal */}
+                <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title={"Create Account"} children={<CreateModalChild onCreate={onAccountCreate} />} />
 
-                {/* Delete Modal */}
-                <Modal 
-                    isOpen={isDeleteModalOpen} 
-                    onClose={() => setIsDeleteModalOpen(false)} 
-                    title="Delete Account"
-                >
-                    <div className="space-y-4">
-                        <p>Are you sure you want to delete this account? This action cannot be undone.</p>
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDeleteConfirm}
-                                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </Modal>
             </div>
         </div>
     );
