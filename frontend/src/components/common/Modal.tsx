@@ -29,7 +29,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
                             </h3>
                             <button
                                 onClick={onClose}
-                                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
+                                className="cursor-pointer rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
                             >
                                 <span className="sr-only">Close</span>
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
