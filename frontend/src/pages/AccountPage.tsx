@@ -76,6 +76,19 @@ const EditModalChild = ({ initialValue, onEdit }:{ initialValue: Account, onEdit
     )
 }
 
+const DeleteModalChild = ({ onDelete }: { onDelete: () => void }) => {
+    return (
+        <div className="flex flex-col gap-3">
+            <h3>Are you sure you want to delete this account ? Note that all transactions related to this account will be deleted </h3>
+            <div className="w-full flex flex-row justify-end items-center gap-3">
+                <button onClick={onDelete} className="px-3 py-2 bg-red-600 text-white rounded-lg">
+                    Delete
+                </button>
+            </div>
+        </div>
+    )
+}
+
 const AccountPage = () => {
 
     const [accounts, setAccounts] = React.useState<Account[]>([
@@ -83,9 +96,10 @@ const AccountPage = () => {
         { id: 2, name: "Laptop Savings", type: AccountTypes.SAVINGS, bank: BANKS[0], balance: 124231.343, status: AccountStatus.INACTIVE }
     ]);
 
-    const [selectedAccount, setSelectedAccount] = React.useState<Account>();
+    const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState<boolean>(false);
     const [isEditModalOpen, setIsEditModalOpen] = React.useState<boolean>(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState<boolean>(false);
 
     const formatAmount = (amount: number) => {
         return amount.toLocaleString(undefined, { maximumFractionDigits: 2 })
@@ -103,6 +117,13 @@ const AccountPage = () => {
             return prev;
         })
         setIsEditModalOpen(false);
+    }
+
+    const onAccountDelete = () => {
+        setAccounts(prev => {
+            return prev.filter(acc => acc.id !== selectedAccount.id);
+        })
+        setIsDeleteModalOpen(false);
     }
 
     return (
@@ -167,7 +188,7 @@ const AccountPage = () => {
                                         <button onClick={() => { setSelectedAccount(account); setIsEditModalOpen(true); }} className="text-blue-500 hover:text-blue-600 cursor-pointer">
                                             <FaPencil />
                                         </button>
-                                        <button className="text-red-500 hover:text-red-600 cursor-pointer">
+                                        <button onClick={() => {  setSelectedAccount(account); setIsDeleteModalOpen(true); }} className="text-red-500 hover:text-red-600 cursor-pointer">
                                             <FaTrash />
                                         </button>
                                     </td>
@@ -182,6 +203,9 @@ const AccountPage = () => {
 
                 {/* Edit account modal */}
                 <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title={"Edit Account"} children={<EditModalChild onEdit={onAccountEdit} initialValue={selectedAccount} />} />
+
+                {/* Delete account modal */}
+                <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title={"Delete Account"} children={<DeleteModalChild onDelete={onAccountDelete} />} />
 
             </div>
         </div>
